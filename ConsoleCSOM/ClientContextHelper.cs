@@ -61,7 +61,7 @@ namespace ConsoleCSOM
                 {
                     // No async methods are allowed in a lock section
                     string accessToken = await AcquireTokenAsync(resourceUri, userPrincipalName, userPassword).ConfigureAwait(false);
-                    Console.WriteLine($"Successfully requested new access token resource {resourceUri.DnsSafeHost} for user {userPrincipalName}");
+                    //Console.WriteLine($"Successfully requested new access token resource {resourceUri.DnsSafeHost} for user {userPrincipalName}");
                     AddTokenToCache(resourceUri, tokenCache, accessToken);
 
                     // Register a thread to invalidate the access token once's it's expired
@@ -86,11 +86,11 @@ namespace ConsoleCSOM
                                     // Take a lock to ensure no other threads are updating the SharePoint Access token at this time
                                     await semaphoreSlimTokens.WaitAsync().ConfigureAwait(false);
                                     RemoveTokenFromCache(resourceUri, tokenCache);
-                                    Console.WriteLine($"Cached token for resource {resourceUri.DnsSafeHost} and user {userPrincipalName} expired");
+                                    //Console.WriteLine($"Cached token for resource {resourceUri.DnsSafeHost} and user {userPrincipalName} expired");
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine($"Something went wrong during cache token invalidation: {ex.Message}");
+                                    //Console.WriteLine($"Something went wrong during cache token invalidation: {ex.Message}");
                                     RemoveTokenFromCache(resourceUri, tokenCache);
                                 }
                                 finally
@@ -114,7 +114,7 @@ namespace ConsoleCSOM
             }
             else
             {
-                Console.WriteLine($"Returning token from cache for resource {resourceUri.DnsSafeHost} and user {userPrincipalName}");
+                //Console.WriteLine($"Returning token from cache for resource {resourceUri.DnsSafeHost} and user {userPrincipalName}");
                 return accessTokenFromCache;
             }
         }

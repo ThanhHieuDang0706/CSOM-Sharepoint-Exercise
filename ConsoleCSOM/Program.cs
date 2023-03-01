@@ -49,35 +49,37 @@ namespace ConsoleCSOM
             return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }
 
-        private static async Task GetFieldTermValue(ClientContext Ctx, string termId)
-        {
-            //load term by id
-            TaxonomySession session = TaxonomySession.GetTaxonomySession(Ctx);
-            Term taxonomyTerm = session.GetTerm(new Guid(termId));
-            Ctx.Load(taxonomyTerm, t => t.Labels,
-                                   t => t.Name,
-                                   t => t.Id);
-            await Ctx.ExecuteQueryAsync();
-        }
+        
 
-        private static async Task ExampleSetTaxonomyFieldValue(ListItem item, ClientContext ctx)
-        {
-            var field = ctx.Web.Fields.GetByTitle("fieldname");
+        //private static async Task GetFieldTermValue(ClientContext Ctx, string termId)
+        //{
+        //    //load term by id
+        //    TaxonomySession session = TaxonomySession.GetTaxonomySession(Ctx);
+        //    Term taxonomyTerm = session.GetTerm(new Guid(termId));
+        //    Ctx.Load(taxonomyTerm, t => t.Labels,
+        //                           t => t.Name,
+        //                           t => t.Id);
+        //    await Ctx.ExecuteQueryAsync();
+        //}
 
-            ctx.Load(field);
-            await ctx.ExecuteQueryAsync();
+        //private static async Task ExampleSetTaxonomyFieldValue(ListItem item, ClientContext ctx)
+        //{
+        //    var field = ctx.Web.Fields.GetByTitle("fieldname");
 
-            var taxField = ctx.CastTo<TaxonomyField>(field);
+        //    ctx.Load(field);
+        //    await ctx.ExecuteQueryAsync();
 
-            taxField.SetFieldValueByValue(item, new TaxonomyFieldValue()
-            {
-                WssId = -1, // alway let it -1
-                Label = "correct label here",
-                TermGuid = "term id"
-            });
-            item.Update();
-            await ctx.ExecuteQueryAsync();
-        }
+        //    var taxField = ctx.CastTo<TaxonomyField>(field);
+
+        //    taxField.SetFieldValueByValue(item, new TaxonomyFieldValue()
+        //    {
+        //        WssId = -1, // alway let it -1
+        //        Label = "correct label here",
+        //        TermGuid = "term id"
+        //    });
+        //    item.Update();
+        //    await ctx.ExecuteQueryAsync();
+        //}
 
         private static async Task CsomTermSetAsync(ClientContext ctx)
         {
@@ -96,39 +98,39 @@ namespace ConsoleCSOM
             await ctx.ExecuteQueryAsync();
         }
 
-        private static async Task CsomLinqAsync(ClientContext ctx)
-        {
-            var fieldsQuery = from f in ctx.Web.Fields
-                              where f.InternalName == "Test" ||
-                                    f.TypeAsString == "TaxonomyFieldTypeMulti" ||
-                                    f.TypeAsString == "TaxonomyFieldType"
-                              select f;
+        //private static async Task CsomLinqAsync(ClientContext ctx)
+        //{
+        //    var fieldsQuery = from f in ctx.Web.Fields
+        //                      where f.InternalName == "Test" ||
+        //                            f.TypeAsString == "TaxonomyFieldTypeMulti" ||
+        //                            f.TypeAsString == "TaxonomyFieldType"
+        //                      select f;
 
-            var fields = ctx.LoadQuery(fieldsQuery);
-            await ctx.ExecuteQueryAsync();
-        }
+        //    var fields = ctx.LoadQuery(fieldsQuery);
+        //    await ctx.ExecuteQueryAsync();
+        //}
 
-        private static async Task SimpleCamlQueryAsync(ClientContext ctx)
-        {
-            var list = ctx.Web.Lists.GetByTitle("Documents");
+        //private static async Task SimpleCamlQueryAsync(ClientContext ctx)
+        //{
+        //    var list = ctx.Web.Lists.GetByTitle("Documents");
 
-            var allItemsQuery = CamlQuery.CreateAllItemsQuery();
-            var allFoldersQuery = CamlQuery.CreateAllFoldersQuery();
+        //    var allItemsQuery = CamlQuery.CreateAllItemsQuery();
+        //    var allFoldersQuery = CamlQuery.CreateAllFoldersQuery();
 
-            var items = list.GetItems(new CamlQuery()
-            {
-                ViewXml = @"<View>
-                                <Query>
-                                    <OrderBy><FieldRef Name='ID' Ascending='False'/></OrderBy>
-                                </Query>
-                                <RowLimit>20</RowLimit>
-                            </View>",
-                FolderServerRelativeUrl = "/sites/test-site-duc-11111/Shared%20Documents/2"
-                //example for site: https://omniapreprod.sharepoint.com/sites/test-site-duc-11111/
-            });
+        //    var items = list.GetItems(new CamlQuery()
+        //    {
+        //        ViewXml = @"<View>
+        //                        <Query>
+        //                            <OrderBy><FieldRef Name='ID' Ascending='False'/></OrderBy>
+        //                        </Query>
+        //                        <RowLimit>20</RowLimit>
+        //                    </View>",
+        //        FolderServerRelativeUrl = "/sites/test-site-duc-11111/Shared%20Documents/2"
+        //        //example for site: https://omniapreprod.sharepoint.com/sites/test-site-duc-11111/
+        //    });
 
-            ctx.Load(items);
-            await ctx.ExecuteQueryAsync();
-        }
+        //    ctx.Load(items);
+        //    await ctx.ExecuteQueryAsync();
+        //}
     }
 }
