@@ -17,6 +17,7 @@ namespace ConsoleCSOM
         private const string tokenEndpoint = "https://login.microsoftonline.com/common/oauth2/token";
         // private const string defaultAADAppId = "9bc3ab49-b65d-410a-85ad-de819febfddc";
 
+        private const string defaultAADAppId = "c17ae1c2-b2e0-410e-86aa-748e26d70bf5";
         // Token cache handling
         private static readonly SemaphoreSlim semaphoreSlimTokens = new SemaphoreSlim(1);
         private AutoResetEvent tokenResetEvent = null;
@@ -123,15 +124,17 @@ namespace ConsoleCSOM
             string resource = $"{resourceUri.Scheme}://{resourceUri.DnsSafeHost}";
 
             var clientId = defaultAADAppId;
-            var body = $"resource={resource}&client_id={clientId}&grant_type=password&username={HttpUtility.UrlEncode(username)}&password={HttpUtility.UrlEncode(password)}";
+    
+            var body = $"resource={resource}&client_id={clientId}&grant_type=password&username={HttpUtility.UrlEncode(username)}&password={HttpUtility.UrlEncode(password)}&scope=openid";
             using (var stringContent = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded"))
             {
                 var result = await httpClient.PostAsync(tokenEndpoint, stringContent).ContinueWith((response) =>
                 {
                     return response.Result.Content.ReadAsStringAsync().Result;
-                }).ConfigureAwait(false);
+                }).ConfigureAwait(true);
 
                 var tokenResult = JsonSerializer.Deserialize<JsonElement>(result);
+                Console.WriteLine(tokenResult);
                 var token = tokenResult.GetProperty("access_token").GetString();
                 return token;
             }
