@@ -122,7 +122,6 @@ namespace ConsoleCSOM
         private async Task<string> AcquireTokenAsync(Uri resourceUri, string username, string password)
         {
             string resource = $"{resourceUri.Scheme}://{resourceUri.DnsSafeHost}";
-
             var clientId = defaultAADAppId;
     
             var body = $"resource={resource}&client_id={clientId}&grant_type=password&username={HttpUtility.UrlEncode(username)}&password={HttpUtility.UrlEncode(password)}&scope=openid";
@@ -134,7 +133,6 @@ namespace ConsoleCSOM
                 }).ConfigureAwait(true);
 
                 var tokenResult = JsonSerializer.Deserialize<JsonElement>(result);
-                Console.WriteLine(tokenResult);
                 var token = tokenResult.GetProperty("access_token").GetString();
                 return token;
             }
