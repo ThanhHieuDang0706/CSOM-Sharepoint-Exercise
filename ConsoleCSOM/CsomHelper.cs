@@ -1,4 +1,5 @@
 ﻿using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Taxonomy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace ConsoleCSOM
     {
         public static async Task CreateListCsom(ClientContext ctx, string title, string description = "")
         {
+            // TODO: Create list with title and description
             var listCreationInfo = new ListCreationInformation
             {
                 Title = title,
@@ -26,14 +28,31 @@ namespace ConsoleCSOM
         public static async Task CreateTermSetCsom(ClientContext ctx)
         {
             // TODO: Create term set
+            var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+            var termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
+            var group = termStore.GetSiteCollectionGroup(ctx.Site, true);
+            Guid newTermSetId = Guid.NewGuid();
+            group.CreateTermSet($"city-{ctx.Web.CurrentUser.Title}", newTermSetId, newTermSetId.GetHashCode());
+            await ctx.ExecuteQueryAsync();
+        }
+
+        public static async Task CreateCityTermCsom(ClientContext ctx, string cityName)
+        {
+            // TODO: Create city term
+            var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+            var termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
+            var group = termStore.GetSiteCollectionGroup(ctx.Site, true);
+            var termSet = group.TermSets.GetByName($"city-{ctx.Web.CurrentUser.Title}");
+            Guid guid = Guid.NewGuid();
+            var term = termSet.CreateTerm(cityName, guid.GetHashCode(), guid);
+            await ctx.ExecuteQueryAsync();
         }
 
         public static async Task CreateSiteFieldsCsom(ClientContext ctx)
         {
             // TODO: Create Site Fields
-            //var field = ctx.Web.Fields.AddFieldAsXml("<Field Type='TaxonomyFieldType' DisplayName='MyTaxonomyField' Required='FALSE' EnforceUniqueValues='FALSE' List='MyList' ShowField='Term1033' Mult='TRUE' />", true, AddFieldOptions.DefaultValue);
-            //ctx.Load(field);
-            //await ctx.ExecuteQueryAsync();
+            
+
         }
 
         public static async Task CreateContentTypeCsom(ClientContext ctx)
@@ -57,9 +76,14 @@ namespace ConsoleCSOM
 
         }
 
-        public static async Task UpdateSiteFieldDefaultValueCsom(ClientContext ctx)
+        public static async Task UpdateAboutFieldDefaultValueCsom(ClientContext ctx)
         {
-            // TODO: Update default value for site fields
+            // TODO: Update default value for about site fields
+        }
+
+        public static async Task UpdateCityFieldDefaultValueCsom(ClientContext ctx)
+        {
+            // TODO: Update city value for city site fields
         }
     }
 }
