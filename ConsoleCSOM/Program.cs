@@ -17,6 +17,8 @@ namespace ConsoleCSOM
 
     class Program
     {
+        // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.1
+
         static async Task Main(string[] args)
         {
             try
@@ -30,7 +32,7 @@ namespace ConsoleCSOM
                     Console.WriteLine($"Site {ctx.Web.Title}");
 
                     //await SimpleCamlQueryAsync(ctx);
-                    await CsomTermSetAsync(ctx);
+                    //await CsomTermSetAsync(ctx);
                 }
 
                 Console.WriteLine($"Press Any Key To Stop!");
