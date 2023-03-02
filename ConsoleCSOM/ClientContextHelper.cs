@@ -41,7 +41,6 @@ namespace ConsoleCSOM
         public ClientContext GetContext(Uri web, string userPrincipalName, SecureString userPassword)
         {
             var context = new ClientContext(web);
-
             context.ExecutingWebRequest += (sender, e) =>
             {
                 string accessToken = EnsureAccessTokenAsync(new Uri($"{web.Scheme}://{web.DnsSafeHost}"), userPrincipalName, new System.Net.NetworkCredential(string.Empty, userPassword).Password).GetAwaiter().GetResult();
