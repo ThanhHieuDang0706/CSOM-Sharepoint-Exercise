@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
+using ContentType = Microsoft.SharePoint.Client.ContentType;
 
 namespace ConsoleCSOM
 {
@@ -103,10 +104,17 @@ namespace ConsoleCSOM
 
         public static bool CheckContentTypeExists(ClientContext ctx, string contentTypeName)
         {
-            var contentType = ctx.Web.ContentTypes.Single(ct => ct.Name == contentTypeName);
-            ctx.Load(contentType);
-            ctx.ExecuteQuery();
-            return contentType != null;
+            try
+            {
+                var contentType = ctx.Site.RootWeb.ContentTypes.SingleOrDefault(ct => ct.Name == contentTypeName);
+                ctx.Load(contentType);
+                ctx.ExecuteQuery();
+                return contentType != null;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
         public static async Task CreateListCsom(ClientContext ctx, string title, string description = "")
@@ -258,29 +266,73 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateContentTypeCsom(ClientContext ctx, string name, string group = "Custom Content Types", string description = "")
+        public static async Task CreateContentTypeForListCsom(ClientContext ctx, string name, string group = "Custom Content Types", string description = "")
         {
-            // TODO: Create Content Type
-            if (CheckContentTypeExists(ctx, name))
+            try
             {
-                Console.WriteLine($"Content type {name} already exists");
-                return;
+                if (CheckContentTypeExists(ctx, name))
+                {
+                    Console.WriteLine($"Content type {name} already exists");
+                    return;
+                }
+
+                ContentTypeCollection contentTypes = ctx.Web.ContentTypes;
+                ctx.Load(contentTypes);
+                await ctx.ExecuteQueryAsync();
+
+                // README: To know more about content type ID: https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-2010/ms452896(v=office.14)
+                var itemContentTypeId = contentTypes.GetById("0x01");
+
+                ctx.Load(itemContentTypeId);
+                await ctx.ExecuteQueryAsync();
+
+                var newContentType = new ContentTypeCreationInformation()
+                {
+                    Name = name,
+                    ParentContentType = itemContentTypeId,
+                    Group = group,
+                    Description = description
+                };
+
+                var addContentType = ctx.Site.RootWeb.ContentTypes.Add(newContentType);
+                ctx.Load(addContentType);
+                await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"Content type {name} created successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        public static async Task AddFieldsToContentTypeByNameCsom(ClientContext ctx, string contentTypeName, string fieldName)
+        {
+            try
+            {
+                ContentTypeCollection contentTypeCollection = ctx.Web.ContentTypes;
+                ctx.Load(contentTypeCollection);
+                await ctx.ExecuteQueryAsync();
+
+                var targetContentType = contentTypeCollection.Single(ct => ct.Name == contentTypeName);
+
+                ctx.Load(targetContentType);
+                await ctx.ExecuteQueryAsync();
+
+                Field targetField = ctx.Web.AvailableFields.GetByInternalNameOrTitle(fieldName);
+                FieldLinkCreationInformation fldLink = new FieldLinkCreationInformation();
+                fldLink.Field = targetField;
+                targetContentType.FieldLinks.Add(fldLink);
+                targetContentType.Update(false);
+
+                await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"Field {fieldName} added to content type {contentTypeName} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
 
-            // README: To know more about content type ID: https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-2010/ms452896(v=office.14)
-            var itemContentTypeId = ctx.Web.AvailableContentTypes.GetById("0x01");
-
-            var newContentType = new ContentTypeCreationInformation()
-            {
-                Name = name,
-                Id = itemContentTypeId.StringId,
-                Group = group,
-                Description = description
-            };
-
-            var addContentType = ctx.Web.ContentTypes.Add(newContentType);
-            ctx.Load(addContentType);
-            await ctx.ExecuteQueryAsync();
         }
 
         public static async Task AddContentTypeToListCsom(ClientContext ctx)
@@ -289,10 +341,6 @@ namespace ConsoleCSOM
 
         }
 
-        public static async Task AddFieldsToContentTypeCsom(ClientContext ctx)
-        {
-            // TODO: Add site fields to content type
-        }
 
         public static async Task Init5ItemsToList(ClientContext ctx)
         {

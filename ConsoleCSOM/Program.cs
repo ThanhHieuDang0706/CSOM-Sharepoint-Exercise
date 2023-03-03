@@ -17,6 +17,7 @@ namespace ConsoleCSOM
 
     class Program
     {
+        private static readonly string  ContentTypeNameDefault = "CSOM Test Content Type";
         static async Task Main(string[] args)
         {
             try
@@ -42,10 +43,19 @@ namespace ConsoleCSOM
                     //await CsomHelper.CreateCityTermCsom(ctx, termSetName, "Stockholm");
 
                     // create site fields
-                    await CsomHelper.CreateTaxonomySiteFieldCsom(ctx, "city", termSetName);
+                    //await CsomHelper.CreateSiteFieldsCsom(ctx, FieldType.Text, "about", termSetName);
+                    //await CsomHelper.CreateTaxonomySiteFieldCsom(ctx, "city", termSetName);
+
+                    // create content type
+                    //await CsomHelper.CreateContentTypeForListCsom(ctx, ContentTypeNameDefault);
+
+                    //// add field site to content type
+                    //await CsomHelper.AddFieldsToContentTypeByNameCsom(ctx, ContentTypeNameDefault, "city");
+                    //await CsomHelper.AddFieldsToContentTypeByNameCsom(ctx, ContentTypeNameDefault, "about");
+
                 }
 
-                Console.WriteLine($"Press Any Key To Stop!");
+                Console.WriteLine("Press Any Key To Stop!");
                 Console.ReadKey();
             }
             catch (Exception ex)
@@ -145,7 +155,7 @@ namespace ConsoleCSOM
         //    await ctx.ExecuteQueryAsync();
         //}
 
-        
+
 
     }
 }
