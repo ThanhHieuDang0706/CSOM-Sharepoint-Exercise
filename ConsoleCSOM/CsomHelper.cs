@@ -118,7 +118,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateListCsom(ClientContext ctx, string title, string description = "")
+        public static async Task CreateList(ClientContext ctx, string title, string description = "")
         {
             try
             {
@@ -149,7 +149,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateTermSetCsom(ClientContext ctx, string termSetName)
+        public static async Task CreateTermSet(ClientContext ctx, string termSetName)
         {
             try
             {
@@ -183,7 +183,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateCityTermCsom(ClientContext ctx, string termSetName, string cityName)
+        public static async Task CreateCityTerm(ClientContext ctx, string termSetName, string cityName)
         {
             try
             {
@@ -205,7 +205,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateSiteFieldsCsom(ClientContext ctx, FieldType fieldType, string fieldName)
+        public static async Task CreateSiteFields(ClientContext ctx, FieldType fieldType, string fieldName)
         {
             try
             {
@@ -229,7 +229,7 @@ namespace ConsoleCSOM
         }
 
         // create taxonomy site field
-        public static async Task CreateTaxonomySiteFieldCsom(ClientContext ctx, string fieldName,
+        public static async Task CreateTaxonomySiteField(ClientContext ctx, string fieldName,
             string termSetName)
         {
             try
@@ -267,7 +267,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateContentTypeForListCsom(ClientContext ctx, string name, string group = "Custom Content Types", string description = "")
+        public static async Task CreateContentTypeForList(ClientContext ctx, string name, string group = "Custom Content Types", string description = "")
         {
             try
             {
@@ -306,7 +306,7 @@ namespace ConsoleCSOM
                 Console.WriteLine(ex.Message);
             }
         }
-        public static async Task AddFieldsToContentTypeByNameCsom(ClientContext ctx, string contentTypeName, string fieldName)
+        public static async Task AddFieldsToContentTypeByName(ClientContext ctx, string contentTypeName, string fieldName)
         {
             try
             {
@@ -347,7 +347,8 @@ namespace ConsoleCSOM
                     ct => ct.Id));
                 await ctx.ExecuteQueryAsync();
 
-                IList<ContentTypeId> reverseOrder = (from ct in currentContentTypeOrder
+                IList<ContentTypeId> reverseOrder = (
+                    from ct in currentContentTypeOrder 
                     where ct.Name.Equals(contentTypeName, StringComparison.OrdinalIgnoreCase)
                     select ct.Id).ToList();
                 targetList.RootFolder.UniqueContentTypeOrder = reverseOrder;
@@ -393,12 +394,12 @@ namespace ConsoleCSOM
 
         }
 
-        public static async Task UpdateAboutFieldDefaultValueCsom(ClientContext ctx)
+        public static async Task UpdateAboutFieldDefaultValue(ClientContext ctx)
         {
             // TODO: Update default value for about site fields
         }
 
-        public static async Task UpdateCityFieldDefaultValueCsom(ClientContext ctx)
+        public static async Task UpdateCityFieldDefaultValue(ClientContext ctx)
         {
             // TODO: Update city value for city site fields
         }

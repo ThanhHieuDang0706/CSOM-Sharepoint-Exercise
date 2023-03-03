@@ -33,25 +33,25 @@ namespace ConsoleCSOM
                     ctx.Load(currentUser);
                     await ctx.ExecuteQueryAsync();
                     // Create list
-                    //await CsomHelper.CreateListCsom(ctx, $"CSOM Test",
+                    //await CsomHelper.CreateList(ctx, $"CSOM Test",
                     //    "Practice CSOM create list");
 
                     // Create term set
                     string termSetName = $"city-{currentUser.Title}";
-                    //await CsomHelper.CreateTermSetCsom(ctx, termSetName);
-                    //await CsomHelper.CreateCityTermCsom(ctx, termSetName, "Ho Chi Minh");
-                    //await CsomHelper.CreateCityTermCsom(ctx, termSetName, "Stockholm");
+                    //await CsomHelper.CreateTermSet(ctx, termSetName);
+                    //await CsomHelper.CreateCityTerm(ctx, termSetName, "Ho Chi Minh");
+                    //await CsomHelper.CreateCityTerm(ctx, termSetName, "Stockholm");
 
                     // create site fields
-                    //await CsomHelper.CreateSiteFieldsCsom(ctx, FieldType.Text, "about", termSetName);
-                    //await CsomHelper.CreateTaxonomySiteFieldCsom(ctx, "city", termSetName);
+                    //await CsomHelper.CreateSiteFields(ctx, FieldType.Text, "about", termSetName);
+                    //await CsomHelper.CreateTaxonomySiteField(ctx, "city", termSetName);
 
                     // create content type
-                    //await CsomHelper.CreateContentTypeForListCsom(ctx, ContentTypeNameDefault);
+                    //await CsomHelper.CreateContentTypeForList(ctx, ContentTypeNameDefault);
 
                     //// add field site to content type
-                    //await CsomHelper.AddFieldsToContentTypeByNameCsom(ctx, ContentTypeNameDefault, "city");
-                    //await CsomHelper.AddFieldsToContentTypeByNameCsom(ctx, ContentTypeNameDefault, "about");
+                    //await CsomHelper.AddFieldsToContentTypeByName(ctx, ContentTypeNameDefault, "city");
+                    //await CsomHelper.AddFieldsToContentTypeByName(ctx, ContentTypeNameDefault, "about");
 
                     // add content type to list
                     await CsomHelper.AddContentTypeToListByName(ctx, "CSOM Test", "Content Type Hello World123", true);
