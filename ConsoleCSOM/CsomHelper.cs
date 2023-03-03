@@ -1,6 +1,7 @@
 ﻿using Microsoft.SharePoint.Client.Taxonomy;
 using Microsoft.SharePoint.Client;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
@@ -335,7 +336,33 @@ namespace ConsoleCSOM
 
         }
 
-        public static async Task AddContentTypeToListByName(ClientContext ctx, string listName, string contentTypeName)
+        public static async Task MakeContentTypeDefaultInList(ClientContext ctx, string listName, string contentTypeName)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listName);
+                var currentContentTypeOrder = targetList.ContentTypes;
+                ctx.Load(currentContentTypeOrder, coll => coll.Include(
+                    ct => ct.Name,
+                    ct => ct.Id));
+                await ctx.ExecuteQueryAsync();
+
+                IList<ContentTypeId> reverseOrder = (from ct in currentContentTypeOrder
+                    where ct.Name.Equals(contentTypeName, StringComparison.OrdinalIgnoreCase)
+                    select ct.Id).ToList();
+                targetList.RootFolder.UniqueContentTypeOrder = reverseOrder;
+                targetList.RootFolder.Update();
+                targetList.Update();
+                await ctx.ExecuteQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            
+        }
+
+        public static async Task AddContentTypeToListByName(ClientContext ctx, string listName, string contentTypeName, bool makeDefaultContentType = false)
         {
             // TODO: Add content type to specific lists
             try
@@ -349,7 +376,6 @@ namespace ConsoleCSOM
 
                 targetList.ContentTypes.AddExistingContentType(targetContentType);
                 targetList.Update();
-                ctx.Web.Update();
                 await ctx.ExecuteQueryAsync();
                 Console.WriteLine($"Content Type {contentTypeName} added to list {listName} successfully!");
             }
