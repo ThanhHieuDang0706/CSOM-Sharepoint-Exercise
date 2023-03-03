@@ -273,14 +273,12 @@ namespace ConsoleCSOM
 
         }
 
-        public static async Task UpdateAboutFieldDefaultValue(ClientContext ctx)
+        public static async Task UpdateFieldDefaultValue<T>(ClientContext ctx, string fieldName, T defaultValue, bool isTaxonomyField = false)
         {
             // TODO: Update default value for about site fields
-        }
+            // get field with fieldName
+            FieldCollection fieldCollection = ctx.Site.RootWeb.Fields;
 
-        public static async Task UpdateCityFieldDefaultValue(ClientContext ctx)
-        {
-            // TODO: Update city value for city site fields
         }
     }
 }
