@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using ContentType = Microsoft.SharePoint.Client.ContentType;
@@ -33,101 +34,10 @@ namespace ConsoleCSOM
             }
         }
 
-        public static bool CheckListNameExists(ClientContext ctx, string listTitle)
-        {
-            try
-            {
-                var list = ctx.Web.Lists.Single(l => l.Title == listTitle);
-                ctx.Load(list);
-                ctx.ExecuteQuery();
-                return list != null;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine(ex.Message);
-                return false;
-            }
-        }
-
-        public static bool CheckTermSetNameExists(ClientContext ctx, string termSetName)
-        {
-            try
-            {
-                // get site 
-                var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
-                var termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
-                var group = termStore.GetSiteCollectionGroup(ctx.Site, true);
-                var termSet = group.TermSets.GetByName(termSetName);
-                ctx.Load(termSet);
-                ctx.ExecuteQuery();
-                return termSet != null;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine(ex.Message);
-                return false;
-            }
-        }
-
-        public static bool CheckTermExistsInTermSetWithName(ClientContext ctx, string termSetName,
-            string termName)
-        {
-            try
-            {
-                var termSet = GetTermSet(ctx, termSetName);
-                var term = termSet.Terms.GetByName(termName);
-                ctx.Load(term);
-                ctx.ExecuteQuery();
-                return term != null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
-        }
-
-        public static bool CheckSiteFieldNameExists(ClientContext ctx, string siteFieldName)
-        {
-            try
-            {
-                var fieldExists = ctx.Web.Fields.GetByInternalNameOrTitle(siteFieldName);
-                ctx.Load(fieldExists);
-                ctx.ExecuteQuery();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
-        }
-
-        public static bool CheckContentTypeExists(ClientContext ctx, string contentTypeName)
-        {
-            try
-            {
-                var contentType = ctx.Site.RootWeb.ContentTypes.SingleOrDefault(ct => ct.Name == contentTypeName);
-                ctx.Load(contentType);
-                ctx.ExecuteQuery();
-                return contentType != null;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
-
         public static async Task CreateList(ClientContext ctx, string title, string description = "")
         {
             try
             {
-                if (CheckListNameExists(ctx, title))
-                {
-                    Console.WriteLine($"List {title} already exists");
-                    return;
-                }
-
                 var listCreationInfo = new ListCreationInformation
                 {
                     Title = title,
@@ -153,12 +63,6 @@ namespace ConsoleCSOM
         {
             try
             {
-                if (CheckTermSetNameExists(ctx, termSetName))
-                {
-                    Console.WriteLine($"Termset {termSetName} already exists!");
-                    return;
-                }
-
                 var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
                 ctx.Load(taxonomySession);
                 await ctx.ExecuteQueryAsync();
@@ -187,12 +91,6 @@ namespace ConsoleCSOM
         {
             try
             {
-                if (CheckTermExistsInTermSetWithName(ctx, termSetName, cityName))
-                {
-                    Console.WriteLine($"Term {cityName} already exists in term set {termSetName}");
-                    return;
-                }
-
                 var termSet = GetTermSet(ctx, termSetName);
                 Guid guid = Guid.NewGuid();
                 var term = termSet.CreateTerm(cityName, Lcid, guid);
@@ -209,12 +107,6 @@ namespace ConsoleCSOM
         {
             try
             {
-                if (CheckSiteFieldNameExists(ctx, fieldName))
-                {
-                    Console.WriteLine($"Field {fieldName} already exists");
-                    return;
-                }
-
                 var createField = ctx.Web.Fields.AddFieldAsXml(
                     $"<Field Type='{fieldType.ToString()}' DisplayName='{fieldName}' Name='{fieldName}' />",
                     true, AddFieldOptions.DefaultValue);
@@ -234,12 +126,6 @@ namespace ConsoleCSOM
         {
             try
             {
-                if (CheckSiteFieldNameExists(ctx, fieldName))
-                {
-                    Console.WriteLine($"Field {fieldName} already exists");
-                    return;
-                }
-
                 var termSet = GetTermSet(ctx, termSetName);
                 var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
                 var termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
@@ -271,12 +157,6 @@ namespace ConsoleCSOM
         {
             try
             {
-                if (CheckContentTypeExists(ctx, name))
-                {
-                    Console.WriteLine($"Content type {name} already exists");
-                    return;
-                }
-
                 ContentTypeCollection contentTypes = ctx.Web.ContentTypes;
                 ctx.Load(contentTypes);
                 await ctx.ExecuteQueryAsync();
