@@ -355,6 +355,8 @@ namespace ConsoleCSOM
                 targetList.RootFolder.Update();
                 targetList.Update();
                 await ctx.ExecuteQueryAsync();
+                Console.WriteLine(
+                    $"Make Content Type {contentTypeName} default in list {listName} successfully");
             }
             catch (Exception ex)
             {
@@ -363,7 +365,7 @@ namespace ConsoleCSOM
             
         }
 
-        public static async Task AddContentTypeToListByName(ClientContext ctx, string listName, string contentTypeName, bool makeDefaultContentType = false)
+        public static async Task AddContentTypeToListByName(ClientContext ctx, string listName, string contentTypeName)
         {
             // TODO: Add content type to specific lists
             try

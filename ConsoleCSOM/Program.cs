@@ -54,7 +54,8 @@ namespace ConsoleCSOM
                     //await CsomHelper.AddFieldsToContentTypeByName(ctx, ContentTypeNameDefault, "about");
 
                     // add content type to list
-                    await CsomHelper.AddContentTypeToListByName(ctx, "CSOM Test", "Content Type Hello World123", true);
+                    await CsomHelper.AddContentTypeToListByName(ctx, "CSOM Test", "CSOM Test Content Type");
+                    await CsomHelper.MakeContentTypeDefaultInList(ctx, "CSOM Test", "CSOM Test Content Type");
                 }
 
                 Console.WriteLine("Press Any Key To Stop!");
