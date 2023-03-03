@@ -1,20 +1,17 @@
 ﻿using Microsoft.SharePoint.Client.Taxonomy;
 using Microsoft.SharePoint.Client;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using ContentType = Microsoft.SharePoint.Client.ContentType;
+using System.Globalization;
 
 namespace ConsoleCSOM
 {
     public class CsomHelper
     {
-        private static readonly int Lcid = 1033;
+        private static readonly int Lcid = CultureInfo.CurrentCulture.LCID;
         public static TermSet GetTermSet(ClientContext ctx, string termSetName)
         {
             try
