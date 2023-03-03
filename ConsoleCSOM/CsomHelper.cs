@@ -3,6 +3,7 @@ using Microsoft.SharePoint.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace ConsoleCSOM
 {
     public class CsomHelper
     {
+        private static readonly int Lcid = 1033;
         public static TermSet GetTermSet(ClientContext ctx, string termSetName)
         {
             try
@@ -129,6 +131,8 @@ namespace ConsoleCSOM
                 list.Description = description;
                 list.Update();
                 await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"List {title} created successfully!");
             }
             catch (Exception ex)
             {
@@ -157,10 +161,12 @@ namespace ConsoleCSOM
                     if (termStore != null)
                     {
                         TermGroup termGroup = termStore.GetSiteCollectionGroup(ctx.Site, true);
-                        termGroup.CreateTermSet(termSetName, Guid.NewGuid(), 1033); // 1033: English
+                        termGroup.CreateTermSet(termSetName, Guid.NewGuid(), Lcid); // Lcid: English
                         await ctx.ExecuteQueryAsync();
                     }
                 }
+                Console.WriteLine($"Termset {termSetName} created successfully!");
+
             }
             catch (Exception ex)
             {
@@ -180,8 +186,9 @@ namespace ConsoleCSOM
 
                 var termSet = GetTermSet(ctx, termSetName);
                 Guid guid = Guid.NewGuid();
-                var term = termSet.CreateTerm(cityName, 1033, guid);
+                var term = termSet.CreateTerm(cityName, Lcid, guid);
                 await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Term {cityName} in set {termSetName} created successfully!");
             }
             catch (Exception ex)
             {
@@ -204,6 +211,46 @@ namespace ConsoleCSOM
                     true, AddFieldOptions.DefaultValue);
                 ctx.Load(createField);
                 await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Field {fieldName} created");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        // create taxonomy site field
+        public static async Task CreateTaxonomySiteFieldCsom(ClientContext ctx, string fieldName,
+            string termSetName)
+        {
+            try
+            {
+                if (CheckSiteFieldNameExists(ctx, fieldName))
+                {
+                    Console.WriteLine($"Field {fieldName} already exists");
+                    return;
+                }
+
+                var termSet = GetTermSet(ctx, termSetName);
+                var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+                var termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
+                ctx.Load(termStore);
+                await ctx.ExecuteQueryAsync();
+
+                var createField = ctx.Web.Fields.AddFieldAsXml(
+                    $"<Field Type='TaxonomyFieldType' DisplayName='{fieldName}' Name='{fieldName}' StaticName='{fieldName}' TermSetId='{termSet.Id.ToString()}' />",
+                    true, AddFieldOptions.DefaultValue);
+
+                ctx.Load(createField);
+                await ctx.ExecuteQueryAsync();
+
+                var updateTaxField = ctx.CastTo<TaxonomyField>(createField);
+                updateTaxField.SspId = termStore.Id;
+                updateTaxField.TermSetId = termSet.Id;
+                updateTaxField.Update();
+                await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"Taxonomy Field {fieldName} created!!");
             }
             catch (Exception ex)
             {

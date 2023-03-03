@@ -25,25 +25,24 @@ namespace ConsoleCSOM
                 {
                     ClientContext ctx = GetContext(clientContextHelper);
 
+                    User currentUser = ctx.Web.CurrentUser;
                     ctx.Load(ctx.Web);
                     await ctx.ExecuteQueryAsync();
-                    User currentUser = ctx.Web.CurrentUser;
 
                     ctx.Load(currentUser);
                     await ctx.ExecuteQueryAsync();
-
                     // Create list
                     //await CsomHelper.CreateListCsom(ctx, $"CSOM Test",
                     //    "Practice CSOM create list");
 
                     // Create term set
-                    //string termSetName = $"city-{currentUser.Title}";
+                    string termSetName = $"city-{currentUser.Title}";
                     //await CsomHelper.CreateTermSetCsom(ctx, termSetName);
                     //await CsomHelper.CreateCityTermCsom(ctx, termSetName, "Ho Chi Minh");
                     //await CsomHelper.CreateCityTermCsom(ctx, termSetName, "Stockholm");
 
                     // create site fields
-                    await CsomHelper.CreateSiteFieldsCsom(ctx, FieldType.Text, "about");
+                    await CsomHelper.CreateTaxonomySiteFieldCsom(ctx, "city", termSetName);
                 }
 
                 Console.WriteLine($"Press Any Key To Stop!");
