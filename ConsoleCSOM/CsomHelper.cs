@@ -131,11 +131,11 @@ namespace ConsoleCSOM
                 {
                     Title = title,
                     TemplateType = (int)ListTemplateType.GenericList,
-                    Description = description
+                    Description = description,
                 };
 
                 var list = ctx.Web.Lists.Add(listCreationInfo);
-
+                list.ContentTypesEnabled = true;
                 list.Description = description;
                 list.Update();
                 await ctx.ExecuteQueryAsync();
@@ -335,9 +335,28 @@ namespace ConsoleCSOM
 
         }
 
-        public static async Task AddContentTypeToListCsom(ClientContext ctx)
+        public static async Task AddContentTypeToListByName(ClientContext ctx, string listName, string contentTypeName)
         {
             // TODO: Add content type to specific lists
+            try
+            {
+                ContentTypeCollection contentTypeCollection = ctx.Web.ContentTypes;
+                ctx.Load(contentTypeCollection);
+                await ctx.ExecuteQueryAsync();
+
+                ContentType targetContentType = contentTypeCollection.Single(ct => ct.Name == contentTypeName);
+                List targetList = ctx.Web.Lists.GetByTitle(listName);
+
+                targetList.ContentTypes.AddExistingContentType(targetContentType);
+                targetList.Update();
+                ctx.Web.Update();
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Content Type {contentTypeName} added to list {listName} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
         }
 
