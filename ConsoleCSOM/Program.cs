@@ -75,54 +75,6 @@ namespace ConsoleCSOM
             return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }
 
-
-
-        //private static async Task GetFieldTermValue(ClientContext Ctx, string termId)
-        //{
-        //    //load term by id
-        //    TaxonomySession session = TaxonomySession.GetTaxonomySession(Ctx);
-        //    Term taxonomyTerm = session.GetTerm(new Guid(termId));
-        //    Ctx.Load(taxonomyTerm, t => t.Labels,
-        //                           t => t.Name,
-        //                           t => t.Id);
-        //    await Ctx.ExecuteQueryAsync();
-        //}
-
-        //private static async Task ExampleSetTaxonomyFieldValue(ListItem item, ClientContext ctx)
-        //{
-        //    var field = ctx.Web.Fields.GetByTitle("fieldname");
-
-        //    ctx.Load(field);
-        //    await ctx.ExecuteQueryAsync();
-
-        //    var taxField = ctx.CastTo<TaxonomyField>(field);
-
-        //    taxField.SetFieldValueByValue(item, new TaxonomyFieldValue()
-        //    {
-        //        WssId = -1, // alway let it -1
-        //        Label = "correct label here",
-        //        TermGuid = "term id"
-        //    });
-        //    item.Update();
-        //    await ctx.ExecuteQueryAsync();
-        //}
-
-        private static async Task CsomTermSetAsync(ClientContext ctx)
-        {
-            // Get the TaxonomySession
-            TaxonomySession taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
-            // Get the term store by name
-            TermStore termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
-            // Get the term group by Name
-            TermGroup termGroup = termStore.Groups.GetByName("Test");
-            // Get the term set by Name
-            TermSet termSet = termGroup.TermSets.GetByName("Test Term Set");
-
-            var terms = termSet.GetAllTerms();
-            ctx.Load(terms);
-            await ctx.ExecuteQueryAsync();
-        }
-
         //private static async Task CsomLinqAsync(ClientContext ctx)
         //{
         //    var fieldsQuery = from f in ctx.Web.Fields
