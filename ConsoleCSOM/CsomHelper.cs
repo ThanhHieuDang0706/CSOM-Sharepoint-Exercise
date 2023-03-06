@@ -2,10 +2,16 @@
 using Microsoft.SharePoint.Client;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ContentType = Microsoft.SharePoint.Client.ContentType;
 using System.Globalization;
+using System.Net.NetworkInformation;
+using System.Runtime.CompilerServices;
+using Microsoft.SharePoint.Client.Search.Query;
+
+using Task = System.Threading.Tasks.Task;
 
 namespace ConsoleCSOM
 {
@@ -84,7 +90,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async Task CreateCityTerm(ClientContext ctx, string termSetName, string cityName)
+        public static async System.Threading.Tasks.Task CreateCityTerm(ClientContext ctx, string termSetName, string cityName)
         {
             try
             {
@@ -130,7 +136,7 @@ namespace ConsoleCSOM
                 await ctx.ExecuteQueryAsync();
 
                 var createField = ctx.Web.Fields.AddFieldAsXml(
-                    $"<Field Type='TaxonomyFieldType' DisplayName='{fieldName}' Name='{fieldName}' StaticName='{fieldName}' TermSetId='{termSet.Id.ToString()}' />",
+                    $"<Field Type='TaxonomyFieldType' DisplayName='{fieldName}' Name='{fieldName}' StaticName='{fieldName}' TermSetId='{{{termSet.Id}}}' />",
                     true, AddFieldOptions.DefaultValue);
 
                 ctx.Load(createField);
@@ -183,7 +189,7 @@ namespace ConsoleCSOM
                 Console.WriteLine(ex.Message);
             }
         }
-        public static async Task AddFieldsToContentTypeByName(ClientContext ctx, string contentTypeName, string fieldName)
+        public static async Task AddFieldsToContentTypeByName(ClientContext ctx, string contentTypeName, string fieldName, bool updateChildren = true)
         {
             try
             {
@@ -200,7 +206,7 @@ namespace ConsoleCSOM
                 FieldLinkCreationInformation fldLink = new FieldLinkCreationInformation();
                 fldLink.Field = targetField;
                 targetContentType.FieldLinks.Add(fldLink);
-                targetContentType.Update(false);
+                targetContentType.Update(updateChildren);
 
                 await ctx.ExecuteQueryAsync();
 
@@ -225,7 +231,7 @@ namespace ConsoleCSOM
                 await ctx.ExecuteQueryAsync();
 
                 IList<ContentTypeId> reverseOrder = (
-                    from ct in currentContentTypeOrder 
+                    from ct in currentContentTypeOrder
                     where ct.Name.Equals(contentTypeName, StringComparison.OrdinalIgnoreCase)
                     select ct.Id).ToList();
                 targetList.RootFolder.UniqueContentTypeOrder = reverseOrder;
@@ -239,7 +245,7 @@ namespace ConsoleCSOM
             {
                 Console.WriteLine(ex.Message);
             }
-            
+
         }
 
         public static async Task AddContentTypeToListByName(ClientContext ctx, string listName, string contentTypeName)
@@ -267,18 +273,505 @@ namespace ConsoleCSOM
         }
 
 
-        public static async Task Init5ItemsToList(ClientContext ctx)
+        public static async Task InitItemsToList(ClientContext ctx, string listTitle, string termSetName, string city = "", string about = "", int numOfItems = 5, bool addMultiTaxField = false, string commaSeperatedMultiTaxValue = "", string multiTaxFieldName = "cities")
         {
-            // TODO: Add 5 items to the list above
+            TaxonomyField taxField =
+                ctx.CastTo<TaxonomyField>(ctx.Site.RootWeb.Fields.GetByTitle("city"));
+            ctx.Load(taxField);
+            await ctx.ExecuteQueryAsync();
 
+            // GET THE TERMS
+            TermSet termSet = GetTermSet(ctx, termSetName);
+            TermCollection termCollection = termSet.Terms;
+            ctx.Load(termCollection);
+            await ctx.ExecuteQueryAsync();
+
+            Term defaultTermCityValue = termCollection.GetByName(taxField.DefaultValue);
+            ctx.Load(defaultTermCityValue);
+            await ctx.ExecuteQueryAsync();
+
+            Term targetTerm;
+            try
+            {
+                targetTerm = termCollection.GetByName(city);
+                ctx.Load(targetTerm);
+                await ctx.ExecuteQueryAsync();
+            }
+            catch
+            {
+                targetTerm = defaultTermCityValue;
+            }
+
+
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
+                for (int i = 0; i < numOfItems; i++)
+                {
+                    var newCityTaxonomyValue = new TaxonomyFieldValue();
+                    if (city == "")
+                    {
+                        newCityTaxonomyValue.Label = defaultTermCityValue.Name;
+                        newCityTaxonomyValue.TermGuid = defaultTermCityValue.Id.ToString();
+                        newCityTaxonomyValue.WssId = -1;
+                    }
+
+                    else
+                    {
+                        newCityTaxonomyValue.Label = targetTerm.Name;
+                        newCityTaxonomyValue.TermGuid = targetTerm.Id.ToString();
+                        newCityTaxonomyValue.WssId = -1;
+                    }
+
+                    ListItem newItem = targetList.AddItem(itemCreateInfo);
+                    string newGuid = Guid.NewGuid().ToString();
+
+                    if (about != "")
+                    {
+                        newItem["about"] = about;
+                    }
+                    else
+                    {
+                        newItem["about"] = await GetSiteFieldDefaultValue(ctx, "about");
+                    }
+
+                    newItem["Title"] = newGuid;
+                    newItem["city"] = newCityTaxonomyValue;
+                    newItem.Update();
+                    if (addMultiTaxField)
+                    {
+                        // Todo: add multi tax value here: https://stackoverflow.com/questions/17076509/set-taxonomy-field-multiple-values
+                        var multiTaxField = ctx.CastTo<TaxonomyField>(targetList.Fields.GetByInternalNameOrTitle("cities"));
+
+                        var listValue = commaSeperatedMultiTaxValue.Split(',');
+                        List<string> fieldValueList = new List<string>();
+                        foreach (var item in listValue)
+                        {
+                            try
+                            {
+                                Term term = termCollection.GetByName(item);
+                                ctx.Load(term);
+                                await ctx.ExecuteQueryAsync();
+                                string fieldValueItem = $"-1;#{term.Name}|{term.Id.ToString()}";
+                                fieldValueList.Add(fieldValueItem);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine($"Error while loading term {item}!");
+                            }
+                        }
+                        // README: https://sharepoint.stackexchange.com/questions/276504/the-given-value-for-a-taxonomy-field-was-not-formatted-in-the-required-intl
+                        string fieldValue = string.Join(";#", fieldValueList);
+                        //Console.WriteLine(fieldValue);
+                        TaxonomyFieldValueCollection newMultiTaxonomyValues =
+                            new TaxonomyFieldValueCollection(ctx, fieldValue, multiTaxField);
+                        multiTaxField.SetFieldValueByValueCollection(newItem, newMultiTaxonomyValues);
+                        newItem.Update();
+                    }
+                    
+                }
+
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Added {numOfItems} items to list {listTitle} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
-        public static async Task UpdateFieldDefaultValue<T>(ClientContext ctx, string fieldName, T defaultValue, bool isTaxonomyField = false)
+        public static async Task<string> GetSiteFieldDefaultValue(ClientContext ctx, string fieldName)
         {
-            // TODO: Update default value for about site fields
+            try
+            {
+                Field field = ctx.Web.Fields.GetByTitle(fieldName);
+                ctx.Load(field, f => f.DefaultValue);
+                await ctx.ExecuteQueryAsync();
+                return field.DefaultValue;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return String.Empty;
+            }
+        }
+
+        public static async Task UpdateFieldDefaultValue(ClientContext ctx, string fieldName, string defaultValue, bool isTaxonomyField = false, string termSetName = "", string cityName = "")
+        {
             // get field with fieldName
-            FieldCollection fieldCollection = ctx.Site.RootWeb.Fields;
+            try
+            {
+                if (isTaxonomyField)
+                {
+                    TaxonomyField field =
+                        ctx.CastTo<TaxonomyField>(ctx.Site.RootWeb.Fields.GetByTitle(fieldName));
+                    ctx.Load(field);
+                    await ctx.ExecuteQueryAsync();
 
+                    TermSet termSet = GetTermSet(ctx, termSetName);
+                    Term cityTerm = termSet.Terms.GetByName(cityName);
+                    ctx.Load(cityTerm);
+                    await ctx.ExecuteQueryAsync();
+
+                    TaxonomyFieldValue defaultTaxonomyValue = new TaxonomyFieldValue()
+                    {
+                        Label = cityTerm.Name,
+                        TermGuid = cityTerm.Id.ToString(),
+                        WssId = -1,
+                    };
+                    var validatedString = field.GetValidatedString(defaultTaxonomyValue);
+                    field.DefaultValue = validatedString.Value;
+                    field.UserCreated = false;
+                    field.UpdateAndPushChanges(true);
+                    await ctx.ExecuteQueryAsync();
+                }
+                else
+                {
+                    Field field = ctx.Site.RootWeb.Fields.GetByTitle(fieldName);
+                    field.DefaultValue = defaultValue;
+                    field.Update();
+                    await ctx.ExecuteQueryAsync();
+                }
+                Console.WriteLine($"Update {fieldName} field site default value {defaultValue} successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
+
+        public static async Task QueryNotAboutItemsCaml(ClientContext ctx, string listTitle)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                CamlQuery camlQuery = new CamlQuery();
+                camlQuery.ViewXml = @"<View>
+                                        <Query>
+                                            <Where>
+                                                <Neq>
+                                                    <FieldRef Name='about' />
+                                                    <Value Type='Text'>about default</Value>
+                                                </Neq>
+                                            </Where>
+                                        </Query>
+                                    </View>";
+                ListItemCollection items = targetList.GetItems(camlQuery);
+                ctx.Load(items);
+                await ctx.ExecuteQueryAsync();
+                foreach (ListItem item in items)
+                {
+                    Console.WriteLine(item["Title"]);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public static async Task CreateListViewByCityOrderByCreatedTime(ClientContext ctx, string listTitle,
+            string viewTitle, string cityName)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ViewCreationInformation viewCreationInfo = new ViewCreationInformation();
+                viewCreationInfo.Title = viewTitle;
+                viewCreationInfo.ViewTypeKind = ViewType.Html;
+                viewCreationInfo.RowLimit = 10;
+                viewCreationInfo.Paged = true;
+                string commaSeperatedCols = "ID,Name,about,city";
+                viewCreationInfo.ViewFields = commaSeperatedCols.Split(',');
+                // query filter by city and order by created time
+                viewCreationInfo.Query = $@"<Where>
+                                                <Eq>
+                                                    <FieldRef Name='city' />
+                                                    <Value Type='TaxonomyFieldType'>{cityName}</Value>
+                                                </Eq>
+                                            </Where>
+                                            <OrderBy>
+                                                <FieldRef Name='Created' Ascending='False' />
+                                            </OrderBy>";
+                ctx.Load(targetList);
+                await ctx.ExecuteQueryAsync();
+
+                View newView = targetList.Views.Add(viewCreationInfo);
+                newView.Update();
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Created view {viewTitle} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+
+        public static async Task UpdateBatchAboutColumnCaml(ClientContext ctx, string listTitle, string newAboutValue, int numOfItemsInBatch = 2)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ctx.Load(targetList);
+                await ctx.ExecuteQueryAsync();
+
+                // create caml query to filter items with about value = about default
+                CamlQuery camlQuery = new CamlQuery();
+                camlQuery.ViewXml = @"<View>
+                                        <Query>
+                                            <Where>
+                                                <Eq>
+                                                    <FieldRef Name='about' />
+                                                    <Value Type='Text'>about default</Value>
+                                                </Eq>
+                                            </Where>
+                                        </Query>
+                                    </View>";
+
+                ListItemCollection items = targetList.GetItems(camlQuery);
+                ctx.Load(items);
+                await ctx.ExecuteQueryAsync();
+
+                int loopTimes = items.Count > numOfItemsInBatch ? numOfItemsInBatch : items.Count;
+
+                for (int i = 0; i < loopTimes; i++)
+                {
+                    var item = items[i];
+                    Console.WriteLine($"Value {item.Id} is put into update batch!");
+                    item["about"] = newAboutValue;
+                    item.UpdateOverwriteVersion();
+                }
+
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"{numOfItemsInBatch} updated!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        // https://sharepoint.stackexchange.com/questions/275238/allowmultiplevalues-in-taxonomy-field-in-csom-javascript
+        public static async Task CreateTaxonomyFieldMulti(ClientContext ctx, string fieldName,
+            string termSetName)
+        {
+            try
+            {
+                var termSet = GetTermSet(ctx, termSetName);
+                var taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+                var termStore = taxonomySession.GetDefaultSiteCollectionTermStore();
+                ctx.Load(termStore);
+
+                var createField = ctx.Web.Fields.AddFieldAsXml($@"
+                        <Field Type='TaxonomyFieldTypeMulti' 
+                             Name='{fieldName}' 
+                             Mult='TRUE'
+                             DisplayName='{fieldName}' StaticName='{fieldName}'
+                             TermSetId='{{{termSet.Id.ToString()}}}'
+                         />", true, AddFieldOptions.DefaultValue);
+      
+                ctx.Load(createField);
+                await ctx.ExecuteQueryAsync();
+
+                var updateTaxField = ctx.CastTo<TaxonomyField>(createField);
+                updateTaxField.SspId = termStore.Id;
+                updateTaxField.TermSetId = termSet.Id;
+                updateTaxField.Update();
+                await ctx.ExecuteQueryAsync();
+
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Created field {fieldName} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public static async Task CreateDocumentLibraryListType(ClientContext ctx, string listTitle)
+        {
+            try
+            {
+                ListCreationInformation listCreationInfo = new ListCreationInformation();
+                listCreationInfo.Title = listTitle;
+                listCreationInfo.TemplateType = (int)ListTemplateType.DocumentLibrary;
+                List newList = ctx.Web.Lists.Add(listCreationInfo);
+                newList.Description = "This is a document library list";
+                newList.ContentTypesEnabled = true;
+                newList.EnableFolderCreation = true;
+                newList.Update();
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Created document library list {listTitle} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        // helper to create folder
+        public static Folder EnsureFolder(ClientContext ctx, Folder parentFolder, string folderPath)
+        {
+            //Split up the incoming path so we have the first element as the a new sub-folder name 
+            //and add it to parentFolder folders collection
+            string[] pathElements = folderPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);           
+            string head = pathElements[0];
+            Folder newFolder = parentFolder.Folders.Add(head);
+            ctx.Load(newFolder);
+            ctx.ExecuteQuery();
+
+            //If we have subfolders to create then the length of pathElements will be greater than 1
+            if (pathElements.Length > 1)
+            {
+                //If we have more nested folders to create then reassemble the folder path using what we have left i.e. the tail
+                string tail = string.Empty;
+                for (int i = 1; i < pathElements.Length; i++)
+                    tail = tail + "/" + pathElements[i];
+
+                //Then make a recursive call to create the next subfolder
+                return EnsureFolder(ctx, newFolder, tail);
+            }
+            else
+                //This ensures that the folder at the end of the chain gets returned
+                return newFolder;            
+        }
+
+        public static async Task CreateFolderInList(ClientContext ctx, string listTitle, string folderName, string folderPathFromRoot = "")
+        {
+            try
+            {
+
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ctx.Load(targetList.RootFolder);
+                await ctx.ExecuteQueryAsync();
+                EnsureFolder(ctx, targetList.RootFolder, folderPathFromRoot + "/" + folderName);
+                Console.WriteLine($"Created folder {folderPathFromRoot + "/" + folderName} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public static async Task CreateItemInFolder(ClientContext ctx, string listTitle, string folderUrl,
+            string itemName, string about="", string cities="", string termSetName="")
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ctx.Load(targetList);
+                await ctx.ExecuteQueryAsync();
+                
+                var serverRelativeUrl = ctx.Web.ServerRelativeUrl;
+                ctx.Load(ctx.Web, w => w.Title);
+                await ctx.ExecuteQueryAsync();
+
+                var fileCreationInfo = new FileCreationInformation()
+                {
+                    Content = System.IO.File.ReadAllBytes(
+                        "D:/projects/CSOM-Sharepoint-Exercise/ConsoleCSOM/Document1.docx"),
+                    Url = $"{serverRelativeUrl}/{listTitle}{folderUrl}/{itemName}.docx"
+                };
+                var file = targetList.RootFolder.Files.Add(fileCreationInfo);
+                ctx.Load(file);
+                await ctx.ExecuteQueryAsync();
+
+                ListItem newItem = file.ListItemAllFields;
+                newItem["Title"] = itemName;
+                newItem["about"] = about;
+                newItem.Update();
+
+                if (cities != "")
+                {
+                    // Todo: add multi tax value here: https://stackoverflow.com/questions/17076509/set-taxonomy-field-multiple-values
+                    var multiTaxField = ctx.CastTo<TaxonomyField>(targetList.Fields.GetByInternalNameOrTitle("cities"));
+                    var termCollection = GetTermSet(ctx, termSetName).Terms;
+                    var listValue = cities.Split(',');
+                    List<string> fieldValueList = new List<string>();
+                    foreach (var item in listValue)
+                    {
+                        try
+                        {
+                            Term term = termCollection.GetByName(item);
+                            ctx.Load(term);
+                            await ctx.ExecuteQueryAsync();
+                            string fieldValueItem = $"-1;#{term.Name}|{term.Id.ToString()}";
+                            fieldValueList.Add(fieldValueItem);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine($"Error while loading term {newItem}!");
+                        }
+                    }
+                    // README: https://sharepoint.stackexchange.com/questions/276504/the-given-value-for-a-taxonomy-field-was-not-formatted-in-the-required-intl
+                    string fieldValue = string.Join(";#", fieldValueList);
+                    //Console.WriteLine(fieldValue);
+                    TaxonomyFieldValueCollection newMultiTaxonomyValues =
+                        new TaxonomyFieldValueCollection(ctx, fieldValue, multiTaxField);
+                    multiTaxField.SetFieldValueByValueCollection(newItem, newMultiTaxonomyValues);
+                    newItem.Update();
+                }
+
+
+                ctx.Load(newItem);
+                await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"Created item {itemName} in folder {folderUrl} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        // https://pholpar.wordpress.com/2018/03/23/how-to-check-if-a-specific-file-exists-in-a-folder-structure-of-a-sharepoint-document-library-using-the-client-object-model/
+        public static async Task GetItemsWithStockHolmInFolderTask(ClientContext ctx, string folderUrl,
+            string listTitle)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ctx.Load(targetList);
+                await ctx.ExecuteQueryAsync();
+
+                var serverRelativeUrl = ctx.Web.ServerRelativeUrl;
+                ctx.Load(ctx.Web, w => w.Title);
+                await ctx.ExecuteQueryAsync();
+
+                string folderServerRelativeUrl = string.Format("{0}/{1}{2}", serverRelativeUrl, listTitle, folderUrl);
+                
+                var camlQuery = new CamlQuery();
+                camlQuery.ViewXml = $@"
+                    <View>
+                        <Query>
+                            <Where>
+                                <Contains>
+                                    <FieldRef Name='cities' />
+                                    <Value Type='TaxonomyFieldType'>Stockholm</Value>
+                                </Contains>
+                            </Where>
+                        </Query>
+                    </View>";
+                camlQuery.FolderServerRelativeUrl = folderServerRelativeUrl;
+
+                ListItemCollection items = targetList.GetItems(camlQuery);
+                ctx.Load(items);
+                await ctx.ExecuteQueryAsync();
+
+                foreach (var item in items)
+                {
+                    Console.WriteLine(item["Title"]);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
     }
 }
