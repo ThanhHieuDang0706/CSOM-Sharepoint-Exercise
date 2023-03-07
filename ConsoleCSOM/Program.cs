@@ -116,43 +116,5 @@ namespace ConsoleCSOM
             var info = config.GetSection("SharepointInfo").Get<SharepointInfo>();
             return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }
-
-        //private static async Task CsomLinqAsync(ClientContext ctx)
-        //{
-        //    var fieldsQuery = from f in ctx.Web.Fields
-        //                      where f.InternalName == "Test" ||
-        //                            f.TypeAsString == "TaxonomyFieldTypeMulti" ||
-        //                            f.TypeAsString == "TaxonomyFieldType"
-        //                      select f;
-
-        //    var fields = ctx.LoadQuery(fieldsQuery);
-        //    await ctx.ExecuteQueryAsync();
-        //}
-
-        //private static async Task SimpleCamlQueryAsync(ClientContext ctx)
-        //{
-        //    var list = ctx.Web.Lists.GetByTitle("Documents");
-
-        //    var allItemsQuery = CamlQuery.CreateAllItemsQuery();
-        //    var allFoldersQuery = CamlQuery.CreateAllFoldersQuery();
-
-        //    var items = list.GetItems(new CamlQuery()
-        //    {
-        //        ViewXml = @"<View>
-        //                        <Query>
-        //                            <OrderBy><FieldRef Name='ID' Ascending='False'/></OrderBy>
-        //                        </Query>
-        //                        <RowLimit>20</RowLimit>
-        //                    </View>",
-        //        FolderServerRelativeUrl = "/sites/test-site-duc-11111/Shared%20Documents/2"
-        //        //example for site: https://omniapreprod.sharepoint.com/sites/test-site-duc-11111/
-        //    });
-
-        //    ctx.Load(items);
-        //    await ctx.ExecuteQueryAsync();
-        //}
-
-
-
     }
 }
