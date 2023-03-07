@@ -773,5 +773,66 @@ namespace ConsoleCSOM
             }
         }
 
+        public static async Task CreateListFolderStructureOnlyTask(ClientContext ctx, string listTitle)
+        {
+            try
+            {
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public static async Task CreateFieldInListCsomHelperTask(ClientContext ctx, string listTitle,
+            string fieldName, FieldType fieldType, string displayName)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ctx.Load(targetList);
+                await ctx.ExecuteQueryAsync();
+
+                var createNewField = targetList.Fields.AddFieldAsXml($"<Field Type='{fieldType.ToString()}' DisplayName='{displayName}' Name='{fieldName}' StaticName='{fieldName}' />", true, AddFieldOptions.DefaultValue);
+                ctx.Load(createNewField);
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Created field {fieldName} in list {listTitle} successfully!");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+        // best explanation for Ensure User: https://tutorials4sharepoint.wordpress.com/2018/07/11/ensureuser-method-in-sharepoint/
+        public static async Task GetUserFromEmailOrName(ClientContext ctx, string emailOrName)
+        {
+            try
+            {
+                // get site users
+                var web = ctx.Web;
+                ctx.Load(web);
+                await ctx.ExecuteQueryAsync();
+
+                // get by name
+
+                User user = web.EnsureUser(emailOrName);
+                ctx.Load(user);
+                await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"Get user {emailOrName} successfully!");
+                // print out the user properties
+                Console.WriteLine($"User: {user.Title} ----- Email: {user.Email} ---------- LoginName: {user.LoginName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
     }
 }
