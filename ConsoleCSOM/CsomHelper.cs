@@ -2,14 +2,11 @@
 using Microsoft.SharePoint.Client;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ContentType = Microsoft.SharePoint.Client.ContentType;
 using System.Globalization;
-using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
-using Microsoft.SharePoint.Client.Search.Query;
+
 
 using Task = System.Threading.Tasks.Task;
 
@@ -90,7 +87,7 @@ namespace ConsoleCSOM
             }
         }
 
-        public static async System.Threading.Tasks.Task CreateCityTerm(ClientContext ctx, string termSetName, string cityName)
+        public static async Task CreateCityTerm(ClientContext ctx, string termSetName, string cityName)
         {
             try
             {
@@ -743,9 +740,8 @@ namespace ConsoleCSOM
                 await ctx.ExecuteQueryAsync();
 
                 string folderServerRelativeUrl = string.Format("{0}/{1}{2}", serverRelativeUrl, listTitle, folderUrl);
-                
                 var camlQuery = new CamlQuery();
-                camlQuery.ViewXml = $@"
+                camlQuery.ViewXml = @"
                     <View>
                         <Query>
                             <Where>
@@ -827,6 +823,57 @@ namespace ConsoleCSOM
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+        }
+
+        public static async Task CreateFolderViewAndMakeDefaultView(ClientContext ctx, string listTitle,
+            string viewTitle)
+        {
+            try
+            {
+                List targetList = ctx.Web.Lists.GetByTitle(listTitle);
+                ViewCreationInformation viewCreationInfo = new ViewCreationInformation();
+                viewCreationInfo.Title = viewTitle;
+                viewCreationInfo.ViewTypeKind = ViewType.Html;
+
+                string commaSeperatedCols = "DocIcon,Name,FileDirRef";
+                viewCreationInfo.ViewFields = commaSeperatedCols.Split(',');
+          
+                // https://sharepoint.stackexchange.com/questions/89844/caml-query-to-filter-items-by-content-type-independent-of-column-name
+                viewCreationInfo.Query = @"<Where>
+                                                <Eq>
+                                                    <FieldRef Name='ContentType' />
+                                                    <Value Type='Computed'>Folder</Value>
+                                                </Eq>
+                                            </Where>";
+                ctx.Load(targetList);
+                await ctx.ExecuteQueryAsync();
+
+                View newView = targetList.Views.Add(viewCreationInfo);
+                newView.DefaultView = true;
+                newView.Update();
+                await ctx.ExecuteQueryAsync();
+                Console.WriteLine($"Created view {viewTitle} in list {listTitle} successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        // FIXME: DONT USE -> DOES NOT WORK
+        private static async Task EnableTreeViewWeb(ClientContext ctx)
+        {
+            try
+            {
+                var rootWeb = ctx.Site.RootWeb;
+                ctx.Load(rootWeb);
+                await ctx.ExecuteQueryAsync();
+                rootWeb.TreeViewEnabled = true;
+                rootWeb.Update();
+                await ctx.ExecuteQueryAsync();
+
+                Console.WriteLine($"Enabled tree view in web {rootWeb.Title} successfully!");
             }
             catch (Exception ex)
             {
