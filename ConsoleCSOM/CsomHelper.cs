@@ -29,7 +29,7 @@ namespace ConsoleCSOM
             }
             catch (Exception ex)
             {
-                //Console.Error.WriteLine(ex.Message);
+                Console.WriteLine(ex.Message);
                 return null;
             }
         }
@@ -361,7 +361,6 @@ namespace ConsoleCSOM
                         }
                         // README: https://sharepoint.stackexchange.com/questions/276504/the-given-value-for-a-taxonomy-field-was-not-formatted-in-the-required-intl
                         string fieldValue = string.Join(";#", fieldValueList);
-                        //Console.WriteLine(fieldValue);
                         TaxonomyFieldValueCollection newMultiTaxonomyValues =
                             new TaxonomyFieldValueCollection(ctx, fieldValue, multiTaxField);
                         multiTaxField.SetFieldValueByValueCollection(newItem, newMultiTaxonomyValues);
@@ -706,7 +705,6 @@ namespace ConsoleCSOM
                     }
                     // README: https://sharepoint.stackexchange.com/questions/276504/the-given-value-for-a-taxonomy-field-was-not-formatted-in-the-required-intl
                     string fieldValue = string.Join(";#", fieldValueList);
-                    //Console.WriteLine(fieldValue);
                     TaxonomyFieldValueCollection newMultiTaxonomyValues =
                         new TaxonomyFieldValueCollection(ctx, fieldValue, multiTaxField);
                     multiTaxField.SetFieldValueByValueCollection(newItem, newMultiTaxonomyValues);
@@ -860,26 +858,5 @@ namespace ConsoleCSOM
                 Console.WriteLine(ex.Message);
             }
         }
-
-        // FIXME: DONT USE -> DOES NOT WORK
-        private static async Task EnableTreeViewWeb(ClientContext ctx)
-        {
-            try
-            {
-                var rootWeb = ctx.Site.RootWeb;
-                ctx.Load(rootWeb);
-                await ctx.ExecuteQueryAsync();
-                rootWeb.TreeViewEnabled = true;
-                rootWeb.Update();
-                await ctx.ExecuteQueryAsync();
-
-                Console.WriteLine($"Enabled tree view in web {rootWeb.Title} successfully!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-
     }
 }
