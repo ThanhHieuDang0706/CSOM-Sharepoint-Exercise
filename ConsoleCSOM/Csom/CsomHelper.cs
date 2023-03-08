@@ -10,7 +10,7 @@ using System.Globalization;
 
 using Task = System.Threading.Tasks.Task;
 
-namespace ConsoleCSOM
+namespace ConsoleCSOM.Csom
 {
     public class CsomHelper
     {
@@ -366,7 +366,7 @@ namespace ConsoleCSOM
                         multiTaxField.SetFieldValueByValueCollection(newItem, newMultiTaxonomyValues);
                         newItem.Update();
                     }
-                    
+
                 }
 
                 await ctx.ExecuteQueryAsync();
@@ -390,7 +390,7 @@ namespace ConsoleCSOM
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return String.Empty;
+                return string.Empty;
             }
         }
 
@@ -568,7 +568,7 @@ namespace ConsoleCSOM
                              DisplayName='{fieldName}' StaticName='{fieldName}'
                              TermSetId='{{{termSet.Id.ToString()}}}'
                          />", true, AddFieldOptions.DefaultValue);
-      
+
                 ctx.Load(createField);
                 await ctx.ExecuteQueryAsync();
 
@@ -613,7 +613,7 @@ namespace ConsoleCSOM
         {
             //Split up the incoming path so we have the first element as the a new sub-folder name 
             //and add it to parentFolder folders collection
-            string[] pathElements = folderPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);           
+            string[] pathElements = folderPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             string head = pathElements[0];
             Folder newFolder = parentFolder.Folders.Add(head);
             ctx.Load(newFolder);
@@ -632,7 +632,7 @@ namespace ConsoleCSOM
             }
             else
                 //This ensures that the folder at the end of the chain gets returned
-                return newFolder;            
+                return newFolder;
         }
 
         public static async Task CreateFolderInList(ClientContext ctx, string listTitle, string folderName, string folderPathFromRoot = "")
@@ -653,14 +653,14 @@ namespace ConsoleCSOM
         }
 
         public static async Task CreateItemInFolder(ClientContext ctx, string listTitle, string folderUrl,
-            string itemName, string about="", string cities="", string termSetName="")
+            string itemName, string about = "", string cities = "", string termSetName = "")
         {
             try
             {
                 List targetList = ctx.Web.Lists.GetByTitle(listTitle);
                 ctx.Load(targetList);
                 await ctx.ExecuteQueryAsync();
-                
+
                 var serverRelativeUrl = ctx.Web.ServerRelativeUrl;
                 ctx.Load(ctx.Web, w => w.Title);
                 await ctx.ExecuteQueryAsync();
@@ -771,7 +771,7 @@ namespace ConsoleCSOM
         {
             try
             {
-                
+
             }
             catch (Exception ex)
             {
@@ -836,7 +836,7 @@ namespace ConsoleCSOM
 
                 string commaSeperatedCols = "DocIcon,Name,FileDirRef";
                 viewCreationInfo.ViewFields = commaSeperatedCols.Split(',');
-          
+
                 // https://sharepoint.stackexchange.com/questions/89844/caml-query-to-filter-items-by-content-type-independent-of-column-name
                 viewCreationInfo.Query = @"<Where>
                                                 <Eq>

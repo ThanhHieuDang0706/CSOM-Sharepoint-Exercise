@@ -1,19 +1,37 @@
-﻿using Microsoft.SharePoint.Client;
+﻿using ConsoleCSOM;
+using Microsoft.Extensions.Configuration;
+using Microsoft.SharePoint.Client;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace ConsoleCSOM
+namespace ConsoleCSOM.Csom
 {
     class CsomExerciseRunner
     {
-        private static readonly string  ContentTypeNameDefault = "CSOM Test Content Type";
-        private static readonly string  DocumentListName = "Document Test";
+        private static readonly string ContentTypeNameDefault = "CSOM Test Content Type";
+        private static readonly string DocumentListName = "Document Test";
         private static readonly string Folder2Url = "/Folder 1/Folder 2";
         private static readonly string ListTestName = "CSOM Test";
-        public static async Task RunTask(User currentUser, ClientContext ctx)
+
+
+        public static async Task Run()
+        {
+            using (var clientContextHelper = new ClientContextHelper())
+            {
+                ClientContext ctx = GetContext(clientContextHelper);
+
+                User currentUser = ctx.Web.CurrentUser;
+                ctx.Load(ctx.Web);
+                await ctx.ExecuteQueryAsync();
+
+                ctx.Load(currentUser);
+                await ctx.ExecuteQueryAsync();
+
+                await RunTask(currentUser, ctx);
+            }
+        }
+
+        private static async Task RunTask(User currentUser, ClientContext ctx)
         {
             // Create list
             await CsomHelper.CreateList(ctx, $"CSOM Test",
@@ -86,6 +104,13 @@ namespace ConsoleCSOM
             await CsomHelper.GetUserFromEmailOrName(ctx, "Hieu Dang Thanh");
 
             await CsomHelper.CreateFolderViewAndMakeDefaultView(ctx, DocumentListName, "Folder View 1.2.1");
+        }
+        private static ClientContext GetContext(ClientContextHelper clientContextHelper)
+        {
+            var builder = new ConfigurationBuilder().AddJsonFile($"appsettings.json", true, true);
+            IConfiguration config = builder.Build();
+            var info = config.GetSection("SharepointInfo").Get<SharepointInfo>();
+            return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }
     }
 }

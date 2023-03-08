@@ -122,7 +122,7 @@ namespace ConsoleCSOM
         {
             string resource = $"{resourceUri.Scheme}://{resourceUri.DnsSafeHost}";
             var clientId = defaultAADAppId;
-    
+
             var body = $"resource={resource}&client_id={clientId}&grant_type=password&username={HttpUtility.UrlEncode(username)}&password={HttpUtility.UrlEncode(password)}&scope=openid";
             using (var stringContent = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded"))
             {
