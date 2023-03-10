@@ -57,7 +57,27 @@ namespace ConsoleCSOM.UserProfile
             }
         }
 
-        public async Task UpdateUser(string accountName)
+        public async Task UpdatePersonTypeProperty(string accountName, string propertyName, string logonName)
+        {
+            try
+            {
+                UserCollection users = _ctx.Web.SiteUsers;
+                _ctx.Load(users, u => u.Include(user => user.LoginName, user => user.Title, user => user.AadObjectId));
+
+                User user = users.GetByEmail("hieudang0706@zyntp.onmicrosoft.com");
+                _ctx.Load(user, u => u.LoginName, u => u.Title, u => u.AadObjectId);
+                await _ctx.ExecuteQueryAsync();
+
+                Console.WriteLine(user.LoginName);
+                Console.WriteLine(user.AadObjectId.NameId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public async Task UpdateUserMutipleChoicePropertyTask(string accountName)
         {
             try
             {
