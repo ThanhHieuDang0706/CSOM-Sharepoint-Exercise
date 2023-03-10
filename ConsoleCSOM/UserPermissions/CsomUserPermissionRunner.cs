@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ConsoleCSOM;
 using ConsoleCSOM.UserPermissions;
+
 
 namespace ConsoleCSOM
 {
@@ -25,7 +25,7 @@ namespace ConsoleCSOM
         {
             using (var clientContextHelper = new ClientContextHelper())
             {
-                ClientContext ctx = GetContext(clientContextHelper);
+                ClientContext ctx = Program.GetContext(clientContextHelper, "SharepointInfoUserPermissionExercise");
 
                 User currentUser = ctx.Web.CurrentUser;
                 ctx.Load(ctx.Web);
@@ -49,14 +49,6 @@ namespace ConsoleCSOM
             //await CsomUserPermissionHelper.AssignPermissionLevelToGroups(ctx, GroupTitle, PermissionLevelName);
 
             //await CsomUserPermissionHelper.AddUsersToGroup(ctx, GroupTitle, GroupEmails);
-        }
-        private static ClientContext GetContext(ClientContextHelper clientContextHelper)
-        {
-            var builder = new ConfigurationBuilder().AddJsonFile($"appsettings.json", true, true);
-            IConfiguration config = builder.Build();
-            var info = config.GetSection("SharepoinInfoUserPermissionExercise").Get<SharepointInfo>();
-            Console.WriteLine($"{info.SiteUrl} -- {info.Username}");
-            return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }
 
         private static string[] GetEmailsOfUsersToAssignRole(string key)

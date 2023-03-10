@@ -18,7 +18,7 @@ namespace ConsoleCSOM.Csom
         {
             using (var clientContextHelper = new ClientContextHelper())
             {
-                ClientContext ctx = GetContext(clientContextHelper);
+                ClientContext ctx = Program.GetContext(clientContextHelper, "SharepointInfo");
 
                 User currentUser = ctx.Web.CurrentUser;
                 ctx.Load(ctx.Web);
@@ -104,13 +104,6 @@ namespace ConsoleCSOM.Csom
             await CsomHelper.GetUserFromEmailOrName(ctx, "Hieu Dang Thanh");
 
             await CsomHelper.CreateFolderViewAndMakeDefaultView(ctx, DocumentListName, "Folder View 1.2.1");
-        }
-        private static ClientContext GetContext(ClientContextHelper clientContextHelper)
-        {
-            var builder = new ConfigurationBuilder().AddJsonFile($"appsettings.json", true, true);
-            IConfiguration config = builder.Build();
-            var info = config.GetSection("SharepointInfo").Get<SharepointInfo>();
-            return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }
     }
 }

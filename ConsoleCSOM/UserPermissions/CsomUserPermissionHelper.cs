@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.SharePoint.Client;
-using Microsoft.SharePoint.Client.Taxonomy;
 
 namespace ConsoleCSOM.UserPermissions
 {
@@ -77,7 +71,7 @@ namespace ConsoleCSOM.UserPermissions
                 await ctx.ExecuteQueryAsync();
                 if (!ctx.Web.HasUniqueRoleAssignments)
                 {
-                    ctx.Web.BreakRoleInheritance(true, false);
+                    ctx.Web.BreakRoleInheritance(false, false);
                     await ctx.ExecuteQueryAsync();
                     Console.WriteLine($"Break inheritance in site {ctx.Web.Url} successfully");
                 }
@@ -128,6 +122,7 @@ namespace ConsoleCSOM.UserPermissions
         {
             try
             {
+                await BreakSiteInheritance(ctx);
                 RoleDefinitionCollection roleDefs = ctx.Site.RootWeb.RoleDefinitions;
                 ctx.Load(roleDefs);
                 await ctx.ExecuteQueryAsync();
@@ -152,7 +147,7 @@ namespace ConsoleCSOM.UserPermissions
             }
         }
 
-        public static async Task CreateGroup(ClientContext ctx, string groupTitle, string description = "")
+        public static async Task CreateGroup(ClientContext ctx, string groupTitle, string description = "Default Group Description")
         {
             try
             {
@@ -178,13 +173,7 @@ namespace ConsoleCSOM.UserPermissions
             try
             {
                 await BreakSiteInheritance(ctx);
-                GroupCollection groupCollection = ctx.Web.SiteGroups;
-                ctx.Load(groupCollection);
-                await ctx.ExecuteQueryAsync();
-
-                Group targetGroup = groupCollection.GetByName(groupTitle);
-                ctx.Load(targetGroup);
-                await ctx.ExecuteQueryAsync();
+                Group targetGroup = await GetGroupByTitle(ctx, groupTitle);
 
                 RoleDefinitionCollection roleDefs = ctx.Web.RoleDefinitions;
                 ctx.Load(ctx.Web.RoleDefinitions);
@@ -215,13 +204,7 @@ namespace ConsoleCSOM.UserPermissions
         {
             try
             {
-                GroupCollection groupCollection = ctx.Web.SiteGroups;
-                ctx.Load(groupCollection);
-                await ctx.ExecuteQueryAsync();
-
-                Group targetGroup = groupCollection.GetByName(groupTitle);
-                ctx.Load(targetGroup);
-                await ctx.ExecuteQueryAsync();
+                Group targetGroup = await GetGroupByTitle(ctx, groupTitle);
 
                 foreach (string email in emails)
                 {
@@ -247,5 +230,16 @@ namespace ConsoleCSOM.UserPermissions
             }
         }
 
+        private static async Task<Group> GetGroupByTitle(ClientContext ctx, string groupTitle)
+        {
+            GroupCollection groupCollection = ctx.Web.SiteGroups;
+            ctx.Load(groupCollection);
+            await ctx.ExecuteQueryAsync();
+
+            Group targetGroup = groupCollection.GetByName(groupTitle);
+            ctx.Load(targetGroup);
+            await ctx.ExecuteQueryAsync();
+            return targetGroup;
+        }
     }
 }
