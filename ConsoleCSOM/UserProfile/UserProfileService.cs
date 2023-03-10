@@ -61,15 +61,19 @@ namespace ConsoleCSOM.UserProfile
         {
             try
             {
-                UserCollection users = _ctx.Web.SiteUsers;
-                _ctx.Load(users, u => u.Include(user => user.LoginName, user => user.Title, user => user.AadObjectId));
+                User user = _ctx.Web.EnsureUser(logonName);
+                _ctx.Load(user, u => u.LoginName, u => u.Title);
+   
 
-                User user = users.GetByEmail("hieudang0706@zyntp.onmicrosoft.com");
-                _ctx.Load(user, u => u.LoginName, u => u.Title, u => u.AadObjectId);
+                var userProperties = _peopleManager.GetPropertiesFor(accountName);
+                _ctx.Load(userProperties, u => u.AccountName);
                 await _ctx.ExecuteQueryAsync();
 
-                Console.WriteLine(user.LoginName);
-                Console.WriteLine(user.AadObjectId.NameId);
+                _peopleManager.SetSingleValueProfileProperty(userProperties.AccountName, propertyName, "i:0#.f|membership|hieudang0706@zyntp.onmicrosoft.com");
+                await _ctx.ExecuteQueryAsync();
+
+
+                Console.WriteLine($"User {userProperties.AccountName} has been updated with property {propertyName} and value {user.LoginName}");
             }
             catch (Exception ex)
             {

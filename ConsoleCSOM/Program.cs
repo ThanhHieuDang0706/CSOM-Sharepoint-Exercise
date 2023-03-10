@@ -23,7 +23,7 @@ namespace ConsoleCSOM
                     UserProfileService userProfileService = new UserProfileService(ctx);
 
                     //await userProfileService.ListUserProperties();
-                    await userProfileService.UpdatePersonTypeProperty("i:0#.f|membership|hieudang0706@zyntp.onmicrosoft.com", "SPS-DontSuggestList", "zyntp\\hieudang0706");
+                    await userProfileService.UpdatePersonTypeProperty("i:0#.f|membership|hieudang0706@zyntp.onmicrosoft.com", "SPS-DontSuggestList", "hieu.dang.thanh@preciofishbone.se");
                 }
             }
             catch (Exception ex)
