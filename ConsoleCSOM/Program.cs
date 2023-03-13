@@ -3,6 +3,7 @@ using Microsoft.SharePoint.Client;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using ConsoleCSOM.Search;
 using ConsoleCSOM.UserProfile;
 using Microsoft.SharePoint.Client.Taxonomy;
 
@@ -19,11 +20,15 @@ namespace ConsoleCSOM
             {
                 using (var clientContextHelper = new ClientContextHelper())
                 {
-                    ClientContext ctx = Program.GetContext(clientContextHelper, "SharepointInfo");
-                    UserProfileService userProfileService = new UserProfileService(ctx);
+                    ClientContext ctx = Program.GetContext(clientContextHelper, "SharepointSearch");
+                    SearchService serachService = new SearchService(ctx);
 
-                    //await userProfileService.ListUserProperties();
-                    await userProfileService.UpdatePersonTypeProperty("i:0#.f|membership|hieudang0706@zyntp.onmicrosoft.com", "SPS-DontSuggestList", "hieu.dang.thanh@preciofishbone.se");
+                    //await serachService.RunSearchQuery("contentclass:STS_ListItem_WebPageLibrary");
+                    //await serachService.RunSearchQuery("cities:(StockHolm, Ho Chi Minh)");
+                    //await serachService.RunSearchQuery("Title:Developer");
+                    await serachService.RunSearchQuery("FirstNameOWSTEXT:Diego");
+
+
                 }
             }
             catch (Exception ex)
@@ -38,7 +43,7 @@ namespace ConsoleCSOM
         {
             var builder = new ConfigurationBuilder().AddJsonFile($"appsettings.json", true, true);
             IConfiguration config = builder.Build();
-            var info = config.GetSection("SharepointInfoUserPermissionExercise").Get<SharepointInfo>();
+            var info = config.GetSection(key).Get<SharepointInfo>();
             Console.WriteLine($"{info.SiteUrl} -- {info.Username}");
             return clientContextHelper.GetContext(new Uri(info.SiteUrl), info.Username, info.Password);
         }

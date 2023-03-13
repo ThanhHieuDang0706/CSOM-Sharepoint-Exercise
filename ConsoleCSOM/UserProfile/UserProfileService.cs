@@ -69,9 +69,8 @@ namespace ConsoleCSOM.UserProfile
                 _ctx.Load(userProperties, u => u.AccountName);
                 await _ctx.ExecuteQueryAsync();
 
-                _peopleManager.SetSingleValueProfileProperty(userProperties.AccountName, propertyName, "i:0#.f|membership|hieudang0706@zyntp.onmicrosoft.com");
+                _peopleManager.SetSingleValueProfileProperty(userProperties.AccountName, propertyName, user.LoginName);
                 await _ctx.ExecuteQueryAsync();
-
 
                 Console.WriteLine($"User {userProperties.AccountName} has been updated with property {propertyName} and value {user.LoginName}");
             }
@@ -81,11 +80,30 @@ namespace ConsoleCSOM.UserProfile
             }
         }
 
-        public async Task UpdateUserMutipleChoicePropertyTask(string accountName)
+        public async Task UpdateUserMutipleChoicePropertyTask(string accountName, string propertyName, string value)
         {
             try
             {
                 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public async Task UpdateUserTaxonomyPropertyTask(string accountName, string propertyName,
+            string value)
+        {
+            try
+            {
+                var userProperties = _peopleManager.GetPropertiesFor(accountName);
+                _ctx.Load(userProperties, u => u.AccountName);
+                await _ctx.ExecuteQueryAsync();
+
+                _peopleManager.SetSingleValueProfileProperty(userProperties.AccountName, propertyName, value);
+                await _ctx.ExecuteQueryAsync();
+                Console.WriteLine($"User {userProperties.AccountName} has been updated with property {propertyName} and value {value}");
             }
             catch (Exception ex)
             {
