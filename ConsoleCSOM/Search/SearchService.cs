@@ -29,6 +29,7 @@ namespace ConsoleCSOM.Search
             KeywordQuery keywordQuery = new KeywordQuery(_ctx);
             keywordQuery.QueryText = query;
             SearchExecutor searchExecutor = new SearchExecutor(_ctx);
+
             ClientResult<ResultTableCollection> results = searchExecutor.ExecuteQuery(keywordQuery);
             await _ctx.ExecuteQueryAsync();
             string json = JsonSerializer.Serialize(results.Value, new JsonSerializerOptions() { WriteIndented = true });

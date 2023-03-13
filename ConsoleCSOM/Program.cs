@@ -25,8 +25,8 @@ namespace ConsoleCSOM
 
                     //await serachService.RunSearchQuery("contentclass:STS_ListItem_WebPageLibrary");
                     //await serachService.RunSearchQuery("cities:(StockHolm, Ho Chi Minh)");
-                    //await serachService.RunSearchQuery("Title:Developer");
-                    await serachService.RunSearchQuery("FirstNameOWSTEXT:Diego");
+                    //await serachService.RunSearchQuery("FirstNameOSWTEXT:Diego");
+
 
 
                 }
