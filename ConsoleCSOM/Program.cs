@@ -21,13 +21,15 @@ namespace ConsoleCSOM
                 using (var clientContextHelper = new ClientContextHelper())
                 {
                     ClientContext ctx = Program.GetContext(clientContextHelper, "SharepointSearch");
-                    SearchService serachService = new SearchService(ctx);
+                    SearchService searchService = new SearchService(ctx);
 
-                    //await serachService.RunSearchQuery("contentclass:STS_ListItem_WebPageLibrary");
-                    //await serachService.RunSearchQuery("cities:(StockHolm, Ho Chi Minh)");
-                    //await serachService.RunSearchQuery("FirstNameOSWTEXT:Diego");
+                    //await searchService.RunSearchQuery("contentclass:STS_ListItem_WebPageLibrary");
+                    //await searchService.RunSearchQuery("cities:(StockHolm, Ho Chi Minh)");
+                    //await searchService.RunSearchQuery("FirstNameOSWTEXT:Diego");
 
+                    //await searchService.SearchInList("CSOM Test", "aboutOWSTEXT:\"Update Script\" city:\"Ho Chi Minh\"");
 
+                    await searchService.SearchUser("AboutMe:\"Developer\"");
 
                 }
             }
